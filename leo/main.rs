@@ -22,7 +22,7 @@ pub mod logger;
 pub mod updater;
 
 use commands::{
-    package::{Add, Clone, Login, Logout, Publish, Remove},
+    package::{Add, Clone, Fetch, Login, Logout, Publish, Remove},
     Build,
     Clean,
     Command,
@@ -137,6 +137,12 @@ enum CommandOpts {
         command: Add,
     },
 
+    #[structopt(about = "Install dependencies for this program")]
+    Fetch {
+        #[structopt(flatten)]
+        command: Fetch,
+    },
+
     #[structopt(about = "Clone a package from the Aleo Package Manager")]
     Clone {
         #[structopt(flatten)]
@@ -214,6 +220,7 @@ fn run_with_args(opt: Opt) -> Result<()> {
         CommandOpts::Update { command } => command.try_execute(context),
 
         CommandOpts::Add { command } => command.try_execute(context),
+        CommandOpts::Fetch { command } => command.try_execute(context),
         CommandOpts::Clone { command } => command.try_execute(context),
         CommandOpts::Login { command } => command.try_execute(context),
         CommandOpts::Logout { command } => command.try_execute(context),
@@ -240,6 +247,7 @@ mod cli_tests {
     use crate::{run_with_args, Opt};
 
     use anyhow::Result;
+    use snarkvm_utilities::Write;
     use std::path::PathBuf;
     use structopt::StructOpt;
     use test_dir::{DirBuilder, FileType, TestDir};
@@ -359,6 +367,7 @@ mod cli_tests {
     }
 
     #[test]
+    #[ignore]
     fn test_import() {
         let dir = testdir("test");
         let path = dir.path("test");
@@ -399,5 +408,32 @@ mod cli_tests {
         assert!(run_cmd("leo test", path).is_ok());
         assert!(run_cmd("leo test -f examples/silly-sudoku/src/lib.leo", path).is_ok());
         assert!(run_cmd("leo test -f examples/silly-sudoku/src/main.leo", path).is_ok());
+    }
+
+    #[test]
+    fn test_install() {
+        let dir = testdir("test");
+        let path = dir.path("test");
+
+        assert!(run_cmd("leo new install", &Some(path.clone())).is_ok());
+
+        let install_path = &Some(path.join("install"));
+
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(path.join("install/Leo.toml"))
+            .unwrap();
+
+        assert!(
+            file.write_all(
+                br#"
+            sudoku = {author = "justice-league", package = "u8u32", version = "0.1.0"}
+        "#
+            )
+            .is_ok()
+        );
+
+        assert!(run_cmd("leo fetch", install_path).is_ok());
     }
 }
