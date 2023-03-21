@@ -43,20 +43,21 @@ pub trait ExpressionVisitor<'a> {
 
     fn visit_access(&mut self, input: &'a AccessExpression, additional: &Self::AdditionalInput) -> Self::Output {
         match input {
-            AccessExpression::AssociatedFunction(function) => {
-                function.args.iter().for_each(|arg| {
-                    self.visit_expression(arg, &Default::default());
-                });
-            }
-            AccessExpression::Member(member) => {
-                self.visit_expression(&member.inner, additional);
-            }
-            AccessExpression::Tuple(tuple) => {
-                self.visit_expression(&tuple.tuple, additional);
-            }
-            _ => {}
-        }
+            AccessExpression::AssociatedFunction(function) => self.visit_associated_function(function, additional),
+            AccessExpression::Member(member) => self.visit_member_access(member, additional),
+            AccessExpression::Tuple(tuple) => self.visit_tuple_access(tuple, additional),
+        };
+        Default::default()
+    }
 
+    fn visit_associated_function(
+        &mut self,
+        input: &'a AssociatedFunction,
+        additional: &Self::AdditionalInput,
+    ) -> Self::Output {
+        input.args.iter().for_each(|arg| {
+            self.visit_expression(arg, additional);
+        });
         Default::default()
     }
 
@@ -89,6 +90,11 @@ pub trait ExpressionVisitor<'a> {
         Default::default()
     }
 
+    fn visit_member_access(&mut self, input: &'a MemberAccess, additional: &Self::AdditionalInput) -> Self::Output {
+        self.visit_expression(&input.inner, additional);
+        Default::default()
+    }
+
     fn visit_ternary(&mut self, input: &'a TernaryExpression, additional: &Self::AdditionalInput) -> Self::Output {
         self.visit_expression(&input.condition, additional);
         self.visit_expression(&input.if_true, additional);
@@ -100,6 +106,11 @@ pub trait ExpressionVisitor<'a> {
         input.elements.iter().for_each(|expr| {
             self.visit_expression(expr, additional);
         });
+        Default::default()
+    }
+
+    fn visit_tuple_access(&mut self, input: &'a TupleAccess, additional: &Self::AdditionalInput) -> Self::Output {
+        self.visit_expression(&input.tuple, additional);
         Default::default()
     }
 

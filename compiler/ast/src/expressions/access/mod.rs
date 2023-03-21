@@ -14,7 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with the Leo library. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{access::*, Node};
+pub mod associated_function_access;
+pub use associated_function_access::*;
+
+pub mod member_access;
+pub use member_access::*;
+
+pub mod tuple_access;
+pub use tuple_access::*;
+
+use crate::Node;
+
 use leo_span::Span;
 
 use serde::{Deserialize, Serialize};
@@ -27,8 +37,6 @@ pub enum AccessExpression {
     // Array(ArrayAccess),
     // /// An expression accessing a range of an array.
     // ArrayRange(ArrayRangeAccess),
-    /// Access to an associated variable of a struct e.g `u8::MAX`.
-    AssociatedConstant(AssociatedConstant),
     /// Access to an associated function of a struct e.g `Pedersen64::hash()`.
     AssociatedFunction(AssociatedFunction),
     /// An expression accessing a field in a structure, e.g., `struct_var.field`.
@@ -40,7 +48,6 @@ pub enum AccessExpression {
 impl Node for AccessExpression {
     fn span(&self) -> Span {
         match self {
-            AccessExpression::AssociatedConstant(n) => n.span(),
             AccessExpression::AssociatedFunction(n) => n.span(),
             AccessExpression::Member(n) => n.span(),
             AccessExpression::Tuple(n) => n.span(),
@@ -49,7 +56,6 @@ impl Node for AccessExpression {
 
     fn set_span(&mut self, span: Span) {
         match self {
-            AccessExpression::AssociatedConstant(n) => n.set_span(span),
             AccessExpression::AssociatedFunction(n) => n.set_span(span),
             AccessExpression::Member(n) => n.set_span(span),
             AccessExpression::Tuple(n) => n.set_span(span),
@@ -62,7 +68,6 @@ impl fmt::Display for AccessExpression {
         use AccessExpression::*;
 
         match self {
-            AssociatedConstant(access) => access.fmt(f),
             AssociatedFunction(access) => access.fmt(f),
             Member(access) => access.fmt(f),
             Tuple(access) => access.fmt(f),
