@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with the Leo library. If not, see <https://www.gnu.org/licenses/>.
 
-use leo_ast::*;
+use crate::*;
 
-use crate::Unroller;
+/// A Consumer trait for instructions in the AST.
+pub trait InstructionConsumer {
+    type Output;
 
-impl ExpressionReconstructor for Unroller<'_> {
-    type AdditionalOutput = ();
+    fn consume_instruction(&mut self, input: Instruction) -> Self::Output;
 }

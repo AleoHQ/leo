@@ -573,4 +573,32 @@ create_messages!(
         msg: format!("Cannot call an external `inline` function."),
         help: None,
     }
+
+    @formatted
+    malformed_instruction {
+        args: (message: impl Display),
+        msg: format!("{message}"),
+        help: None,
+    }
+
+    @formatted
+    invalid_instruction_operand_types {
+        args: (op: impl Display, message: impl Display),
+        msg: format!("The operand types are invalid. {op} accepts one of the following: {message}"),
+        help: None,
+    }
+
+    @formatted
+    asm_block_cannot_be_nested {
+        args: (),
+        msg: format!("An `asm` block cannot be defined in a conditional or loop."),
+        help: None,
+    }
+
+    @formatted
+    asm_block_cannot_be_in_inline_function {
+        args: (),
+        msg: format!("An `asm` block cannot be defined in an `inline` function."),
+        help: None,
+    }
 );

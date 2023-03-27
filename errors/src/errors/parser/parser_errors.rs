@@ -283,4 +283,25 @@ create_messages!(
         msg: format!("`console` statements are not yet supported."),
         help: Some("Consider using `assert`, `assert_eq`, or `assert_neq` instead.".to_string()),
     }
+
+    @formatted
+    expected_identifier_with_name {
+        args: (name: impl Display),
+        msg: format!("Expected an identifier with name `{name}`."),
+        help: None,
+    }
+
+    @formatted
+    invalid_opcode {
+        args: (),
+        msg: format!("Expected a valid opcode."),
+        help: None,
+    }
+
+    @formatted
+    invalid_instruction_operand {
+        args: (),
+        msg: format!("Invalid instruction operand. Expected a literal, identifier, struct/record access, `self.caller`, or program ID."),
+        help: None,
+    }
 );
