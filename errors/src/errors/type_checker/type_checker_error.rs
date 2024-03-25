@@ -394,7 +394,7 @@ create_messages!(
     @formatted
     missing_finalize {
         args: (),
-        msg: format!("Function must contain a `finalize` statement on all execution paths."),
+        msg: format!("Async transitions must contain an async function call on all execution paths."),
         help: None,
     }
 
@@ -536,7 +536,7 @@ create_messages!(
     @formatted
     function_cannot_input_or_output_a_record {
         args: (),
-        msg: format!("A `function` cannot have a record as input or output."),
+        msg: format!("Only `transition` functions can have a record as input or output."),
         help: None,
     }
 
@@ -751,7 +751,7 @@ create_messages!(
     @formatted
     no_transitions {
         args: (),
-        msg: format!("A program must have at least one transition function."),
+        msg: "A program must have at least one transition function.".to_string(),
         help: None,
     }
 
@@ -767,5 +767,174 @@ create_messages!(
         args: (struct_: impl Display, program_1: impl Display, program_2: impl Display),
         msg: format!("The definition for `{struct_}` in program `{program_1}.aleo` does not match the definition in program `{program_2}.aleo`"),
         help: Some("Check that the struct definition in the current program matches the definition in the imported program.".to_string()),
+    }
+
+    @formatted
+    async_transition_invalid_output {
+        args: (),
+        msg: "An async transition must return a future as the final output, and in no other position return a future.".to_string(),
+        help: Some("Example: `async transition foo() -> (Future, u8, bool) {...}`".to_string()),
+    }
+
+    @formatted
+    must_propagate_all_futures {
+        args: (never_propagated: impl Display),
+        msg: format!("All futures generated from external transition calls must be inserted into an async function call in the order they were called. The following were never were: {never_propagated}"),
+        help: Some("Example: `async transition foo() -> Future { let a: Future = b.aleo/bar(); return await_futures(a); }`".to_string()),
+    }
+
+    @formatted
+    async_transition_must_call_async_function {
+        args: (),
+        msg: "An async transition must call an async function.".to_string(),
+        help: Some("Example: `async transition foo() -> Future { let a: Future = bar(); return await_futures(a); }`".to_string()),
+    }
+    @formatted
+    async_function_input_length_mismatch {
+        args: (expected: impl Display, received: impl Display),
+        msg: format!("Expected `{expected}` inputs, but got `{received}`"),
+        help: Some("Check that the number of arguments passed in are the same as the number in the function signature. Ex: `async function foo(a: u8, b: u8)` has two input arguments.".to_string()),
+    }
+
+    @formatted
+    invalid_future_access {
+        args: (num: impl Display, len: impl Display),
+        msg: format!(
+            "Cannot access argument `{num}` from future. The future only has `{len}` arguments."
+        ),
+        help: None,
+    }
+
+    @formatted
+    future_access_must_be_number {
+        args: (name: impl Display),
+        msg: format!("Future access must be a number not `{name}`."),
+        help: Some(" Future arguments must be addressed by their index. Ex: `f.1.3`.".to_string()),
+    }
+
+    @formatted
+    max_conditional_block_depth_exceeded {
+        args: (max: impl Display),
+        msg: format!("The type checker has exceeded the max depth of nested conditional blocks: {max}."),
+        help: Some("Re-run with a larger maximum depth using the `--conditional_block_max_depth` build option. Ex: `leo run main --conditional_block_max_depth 25`.".to_string()),
+    }
+
+    @formatted
+    no_path_awaits_all_futures_exactly_once {
+        args: (num_total_paths: impl Display),
+        msg: format!("Futures must be awaited exactly once. Out of `{num_total_paths}`, there does not exist a single path in which all futures are awaited exactly once."),
+        help: Some("Ex: for `f: Future` call `f.await()` to await a future. Remove duplicate future await redundancies, and add future awaits for un-awaited futures.".to_string()),
+    }
+
+    @formatted
+    future_awaits_missing {
+        args: (unawaited: impl Display),
+        msg: format!("The following futures were never awaited: {unawaited}"),
+        help: Some("Ex: for `f: Future` call `f.await()` to await a future.".to_string()),
+    }
+
+    @formatted
+    cannot_reassign_future_variable {
+        args: (var: impl Display),
+        msg: format!("Cannot reassign variable `{var}` since it has type Future."),
+        help: Some("Futures can only be defined as the result of async calls.".to_string()),
+    }
+
+    @formatted
+    invalid_await_call {
+        args: (),
+        msg: "Not a valid await call.".to_string(),
+        help: Some("Ex: for `f: Future` call `f.await()` or `Future::Await(f)` to await a future.".to_string()),
+    }
+
+    @formatted
+    can_only_await_one_future_at_a_time {
+        args: (),
+        msg: "Must await exactly one future at a time".to_string(),
+        help: Some("Ex: for `f: Future` call `f.await()` or `Future::Await(f)` to await a future.".to_string()),
+    }
+
+    @formatted
+    expected_future {
+        args: (type_: impl Display),
+        msg: format!("Expected a future, but found `{type_}`"),
+        help: Some("Only futures can be awaited.".to_string()),
+    }
+
+    @formatted
+    invalid_method_call {
+        args: (),
+        msg: "Not a valid method call.".to_string(),
+        help: Some("Ex: for `f: Future` call associated method for the struct instance `f.await()`.".to_string()),
+    }
+
+    @formatted
+    async_call_in_conditional {
+        args: (),
+        msg: "Cannot call an async function in a conditional block.".to_string(),
+        help: Some("Move the async call outside of the conditional block.".to_string()),
+    }
+
+    @formatted
+    must_call_finalize_once {
+        args: (),
+        msg: "Must call exactly one local async function per transition function.".to_string(),
+        help: Some("Move the async call outside of the transition block.".to_string()),
+    }
+
+    @formatted
+    async_call_can_only_be_done_from_async_transition {
+        args: (),
+        msg: "Can only make an async call from an async transition.".to_string(),
+        help: Some("Move the async call inside of the async transition block.".to_string()),
+    }
+
+    @formatted
+    external_transition_call_must_be_before_finalize {
+        args: (),
+        msg: "Inside the body of an async transition, all external async transition calls must be made before the transition's async function call.".to_string(),
+        help: Some("Move the async call before the function call.".to_string()),
+    }
+
+    @formatted
+    unknown_future_consumed {
+        args: (future: impl Display),
+        msg: format!("Unknown future consumed: `{future}`"),
+        help: Some("Make sure the future is defined and consumed only once.".to_string()),
+    }
+
+    @formatted
+    not_all_futures_consumed {
+        args: (unconsumed: impl Display),
+        msg: format!("Not all futures were consumed: {unconsumed}"),
+        help: Some("Make sure all futures are consumed exactly once. Consume by passing to an async function call.".to_string()),
+    }
+
+    @formatted
+    return_in_finalize {
+        args: (),
+        msg: "Cannot return a value in an async function block.".to_string(),
+        help: Some("Async functions execute on-chain. Since async transitions call async functions, and async transitions execute offline, it would be impossible for the async function to be able to return on-chain state to the transition function.".to_string()),
+    }
+
+    @formatted
+    async_transition_missing_future_to_return {
+        args: (),
+        msg: "An async transition must return a future.".to_string(),
+        help: Some("Call an async function inside of the async transition body so that there is a future to return.".to_string()),
+    }
+
+    @formatted
+    finalize_function_cannot_return_value {
+        args: (),
+        msg: "An async function is not allowed to return a value.".to_string(),
+        help: Some("Remove an output type in the function signature, and remove the return statement from the function.".to_string()),
+    }
+
+    @formatted
+    return_type_of_finalize_function_is_future {
+        args: (),
+        msg: "The output of an async function must be assigned to a Future type..".to_string(),
+        help: None,
     }
 );

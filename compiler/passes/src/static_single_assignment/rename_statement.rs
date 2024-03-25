@@ -33,6 +33,7 @@ use leo_ast::{
     ExpressionStatement,
     Identifier,
     IterationStatement,
+    MethodCall,
     Node,
     ReturnStatement,
     Statement,
@@ -369,6 +370,23 @@ impl StatementConsumer for StaticSingleAssigner<'_> {
                     id: input.id,
                 }))
             }
+            Expression::Access(AccessExpression::MethodCall(method_call)) => {
+                // Process the arguments.
+                let arguments = process_arguments(method_call.arguments);
+                // Create and accumulate the new expression statement.
+                // Note that we do not create a new assignment for the method call; this is necessary for correct code generation.
+                statements.push(Statement::Expression(ExpressionStatement {
+                    expression: Expression::Access(AccessExpression::MethodCall(MethodCall {
+                        receiver: method_call.receiver,
+                        arguments,
+                        span: method_call.span,
+                        id: method_call.id,
+                        name: method_call.name,
+                    })),
+                    span: input.span,
+                    id: input.id,
+                }))
+            }
 
             _ => unreachable!("Type checking guarantees that expression statements are always function calls."),
         }
@@ -387,26 +405,8 @@ impl StatementConsumer for StaticSingleAssigner<'_> {
         // Consume the return expression.
         let (expression, mut statements) = self.consume_expression(input.expression);
 
-        // Consume the finalize arguments if they exist.
-        // Process the arguments, accumulating any statements produced.
-        let finalize_args = input.finalize_arguments.map(|arguments| {
-            arguments
-                .into_iter()
-                .map(|argument| {
-                    let (argument, stmts) = self.consume_expression(argument);
-                    statements.extend(stmts);
-                    argument
-                })
-                .collect()
-        });
-
         // Add the simplified return statement to the list of produced statements.
-        statements.push(Statement::Return(ReturnStatement {
-            expression,
-            finalize_arguments: finalize_args,
-            span: input.span,
-            id: input.id,
-        }));
+        statements.push(Statement::Return(ReturnStatement { expression, span: input.span, id: input.id }));
 
         statements
     }

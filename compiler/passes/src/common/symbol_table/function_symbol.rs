@@ -14,27 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with the Leo library. If not, see <https://www.gnu.org/licenses/>.
 
-use leo_ast::{Function, Input, Type, Variant};
+use leo_ast::{Function, Input, Location, Type, Variant};
 use leo_span::Span;
 
 use serde::{Deserialize, Serialize};
 
 use crate::SymbolTable;
 
-/// Metadata associated with the finalize block.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FinalizeData {
-    /// The inputs to the finalize block.
-    pub(crate) input: Vec<Input>,
-    /// The output type of the finalize block.
-    pub(crate) output_type: Type,
-}
-
 /// An entry for a function in the symbol table.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FunctionSymbol {
     /// The index associated with the scope in the parent symbol table.
     pub(crate) id: usize,
+    /// Whether the function is asynchronous or not.
+    pub(crate) is_async: bool,
     /// The output type of the function.
     pub(crate) output_type: Type,
     /// Is this function a transition, inlined, or a regular function?.
@@ -43,22 +36,23 @@ pub struct FunctionSymbol {
     pub(crate) _span: Span,
     /// The inputs to the function.
     pub(crate) input: Vec<Input>,
-    /// Metadata associated with the finalize block.
-    pub(crate) finalize: Option<FinalizeData>,
+    /// Future inputs.
+    pub(crate) future_inputs: Vec<Location>,
+    /// The finalize block associated with the function.
+    pub(crate) finalize: Option<Location>,
 }
 
 impl SymbolTable {
     pub(crate) fn new_function_symbol(id: usize, func: &Function) -> FunctionSymbol {
         FunctionSymbol {
             id,
+            is_async: func.is_async,
             output_type: func.output_type.clone(),
             variant: func.variant,
             _span: func.span,
             input: func.input.clone(),
-            finalize: func.finalize.as_ref().map(|finalize| FinalizeData {
-                input: finalize.input.clone(),
-                output_type: finalize.output_type.clone(),
-            }),
+            future_inputs: Vec::new(),
+            finalize: None,
         }
     }
 }

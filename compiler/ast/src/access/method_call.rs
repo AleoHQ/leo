@@ -14,27 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with the Leo library. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{Expression, Node, NodeID};
+use crate::{Expression, Identifier, Node, NodeID};
 use leo_span::Span;
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// A return statement `return expression;`.
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-pub struct ReturnStatement {
-    /// The expression to return to the function caller.
-    pub expression: Expression,
-    /// The span of `return expression` excluding the semicolon.
+/// An access expression to a method call in a struct, e.g.`future_var.await()`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MethodCall {
+    /// The target of the method call.
+    pub receiver: Box<Expression>,
+    /// The name of the method that is being called.
+    pub name: Identifier,
+    /// The arguments passed to the function `name`.
+    pub arguments: Vec<Expression>,
+    /// The span for the entire expression.
     pub span: Span,
     /// The ID of the node.
     pub id: NodeID,
 }
 
-impl fmt::Display for ReturnStatement {
+impl fmt::Display for MethodCall {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "return {}", self.expression)
+        write!(f, "{}{}()", self.receiver, self.name)
     }
 }
 
-crate::simple_node_impl!(ReturnStatement);
+crate::simple_node_impl!(MethodCall);
